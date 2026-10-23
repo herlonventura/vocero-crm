@@ -17,5 +17,8 @@ APK debug y lint Android. Emulador API 35 con WhatsApp falso: login, cámara,
 PDF, descarga/lector, compartir en frío/caliente, offline/reintento, enlace
 externo, micrófono denegado, logout y dos marcas ficticias.
 
-Detalles y límites: `specs/053-android-opcional/verificacion.md`. Sin publicación ni
-pruebas en hardware físico; el APK requiere mantenimiento Android separado.
+En un celular Android real: la misma base (WebView, sesión, cámara, archivos,
+compartir) se usa a diario en producción en una instalación propia con marca y
+extras propios (VHE Engenharia, Brasil); esta versión genérica se probó en
+emulador. Detalles y límites: `specs/053-android-opcional/verificacion.md`. El APK
+requiere mantenimiento Android separado.
