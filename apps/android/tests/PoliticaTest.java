@@ -10,6 +10,8 @@ public class PoliticaTest {
     public static void main(String[] args) throws Exception {
         String base = "https://crm.example";
         comprobar(Politica.mismoOrigen(base, base + "/inbox?q=1"));
+        // La política no depende de una lista de pantallas ni de la versión instalada.
+        for (String ruta : new String[]{"/projetos", "/projetos/pr_ficticio", "/contacts/ct_ficticio", "/inbox?conversation=cv_ficticia", "/settings/team", "/futura/detalle"}) comprobar(Politica.mismoOrigen(base, base + ruta));
         comprobar(Politica.mismoOrigen(base, "https://CRM.EXAMPLE:443/api/media/a"));
         for (String u : new String[]{"http://crm.example", "https://crm.example:444", "https://crm.example.evil.test", "https://crm.example@evil.test", "https://user@crm.example", "https://crm.example\\@evil.test", "file:///data/private", "content://private/a", "javascript:alert(1)", "//crm.example", "intent://app"}) comprobar(!Politica.mismoOrigen(base, u));
         comprobar(Politica.medio(base, base + "/api/media/id?download=1"));
