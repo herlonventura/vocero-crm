@@ -6,6 +6,14 @@ import path from 'node:path';
 import { servidor, mismoOrigen, enlaceExterno, feed, marca, cookiePersistente, cookieRestaurada, descargaPermitida, nombreArchivo, citasDebidas } from '../src/politica.mjs';
 import { caja } from '../src/caja.mjs';
 const origen = 'https://crm.example.test';
+// Catálogo real del menú, incluidos todos los enlaces de Ajustes.
+const menu = [...new Set([...fs.readFileSync(new URL('../../../src/lib/nav.ts', import.meta.url), 'utf8').matchAll(/href:\s*["']([^"']+)["']/g)].map(m => m[1]))];
+test('todo el menú y páginas futuras permanecen en la instancia', () => {
+  assert.ok(menu.length >= 10);
+  for (const ruta of [...menu, '/projetos', '/projetos/pr_ficticio', '/contacts/ct_ficticio', '/inbox?conversation=cv_ficticia', '/futura/detalle']) {
+    assert.equal(mismoOrigen(origen + ruta, origen), true, ruta);
+  }
+});
 for (const valor of ['http://crm.example.test', 'file:///C:/prueba', 'https://user:clave@crm.example.test', origen + '/ruta', origen + '?token=ejemplo']) test('rechaza servidor ' + valor, () => assert.throws(() => servidor(valor)));
 test('HTTPS normalizado y loopback solo desarrollo', () => { assert.equal(servidor(origen + '/'), origen); assert.equal(servidor('http://localhost:3014', true), 'http://localhost:3014'); assert.throws(() => servidor('http://localhost:3014')); assert.throws(() => servidor('http://192.168.1.2', true)); });
 test('origen exacto, sin credenciales y sin subdominios', () => { assert.equal(mismoOrigen(origen + '/inbox', origen), true); for (const u of [origen + '.evil.test', 'https://u:p@crm.example.test', 'javascript:alert(1)']) assert.equal(mismoOrigen(u, origen), false); });
