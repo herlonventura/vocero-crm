@@ -78,5 +78,5 @@ o salida puede descartarla; no hay cola de envío ni borrador nativo persistente
 
 El mantenedor debe decidir si mantener un proyecto Java/Gradle compensa frente
 a la PWA, si acepta Android 10 mínimo y un APK por instancia, y cómo asignar
-versión/spec al momento del merge. 2.3.0 es solo propuesta conforme a AGENTS.md;
+versión/spec al momento del merge. la versión final la asigna el mantenedor (la base actual es 2.4.0);
 las etiquetas aún no publicadas de los manifiestos no son una orden de deploy.

@@ -46,8 +46,8 @@ const ctx = await browser.newContext({
 const req = ctx.request;
 
 console.log("== Setup: operador, conexión y conversaciones ==");
-const email = "e2e@vocero.test";
-const password = "password-e2e-123";
+const email = process.env.E2E_EMAIL ?? "e2e@vocero.test";
+const password = process.env.E2E_PASSWORD ?? "password-e2e-123";
 let su = await req.post(`${BASE}/api/auth/sign-up/email`, {
   data: { email, password, name: "Operador E2E" },
 });
@@ -246,9 +246,12 @@ await page.getByText(NOMBRES.origen).first().click();
 const burbuja = page.getByText(`Así lo quiero ${S}`).first();
 await burbuja.waitFor({ timeout: 10000 });
 // El botón de ESTA imagen: el hilo anterior también tenía una (la pegada).
-const boton = burbuja.locator("xpath=..").getByRole("button", { name: "Reenviar imagen" });
-ok("la imagen trae «Reenviar imagen»", (await boton.count()) >= 1);
-await boton.first().click();
+// 059: es el icono «Reenviar» que aparece al pasar el ratón por la burbuja.
+const filaDe = (p, id) => p.locator(`div.group:has([data-message-id="${id}"])`);
+const boton = filaDe(page, imagen.id).getByRole("button", { name: "Reenviar", exact: true });
+await filaDe(page, imagen.id).hover();
+ok("la imagen trae «Reenviar»", (await boton.count()) === 1);
+await boton.click();
 const dialogo = page.getByRole("dialog", { name: "Reenviar imagen" });
 await dialogo.waitFor({ timeout: 5000 });
 ok("el diálogo enseña la imagen", (await dialogo.getByRole("img", { name: "Imagen para reenviar" }).count()) === 1);
@@ -312,7 +315,8 @@ await tel.goto(`${BASE}/inbox`);
 await tel.getByText(NOMBRES.origen).first().click();
 const burbujaTel = tel.getByText(`Así lo quiero ${S}`).first();
 await burbujaTel.waitFor({ timeout: 10000 });
-await burbujaTel.locator("xpath=..").getByRole("button", { name: "Reenviar imagen" }).click();
+await filaDe(tel, imagen.id).hover();
+await filaDe(tel, imagen.id).getByRole("button", { name: "Reenviar", exact: true }).click();
 const dialogoTel = tel.getByRole("dialog", { name: "Reenviar imagen" });
 await dialogoTel.waitFor({ timeout: 5000 });
 const rd = await dialogoTel.boundingBox();

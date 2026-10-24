@@ -41,8 +41,8 @@ const ctx = await browser.newContext({ viewport: { width: 1500, height: 950 } })
 const req = ctx.request;
 
 console.log("== Setup: operador, conexión y una conversación ==");
-const email = "e2e@vocero.test";
-const password = "password-e2e-123";
+const email = process.env.E2E_EMAIL ?? "e2e@vocero.test";
+const password = process.env.E2E_PASSWORD ?? "password-e2e-123";
 let su = await req.post(`${BASE}/api/auth/sign-up/email`, {
   data: { email, password, name: "Operador E2E" },
 });
@@ -96,7 +96,10 @@ await box.waitFor({ timeout: 20000 });
 console.log("\n== El operador responde citando ==");
 const burbuja = page.locator(`[data-message-id="${original.id}"]`);
 await burbuja.hover();
-const responder = burbuja.locator("xpath=..").getByRole("button", { name: "Responder" });
+// 059: la burbuja va envuelta (gestos táctiles); el icono vive en su fila.
+const responder = page
+  .locator(`div.group:has([data-message-id="${original.id}"])`)
+  .getByRole("button", { name: "Responder" });
 await responder.click();
 const vista = page.locator(`[data-replying-to="${original.id}"]`);
 ok("el compositor enseña la cita", await vista.isVisible());

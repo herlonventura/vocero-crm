@@ -16,7 +16,7 @@ viva, `WA_MOCK_ENABLED=true` y `META_GRAPH_BASE_URL` apuntando a wa-mock.
    y dos a la vez. **Esperado:** cada una avisa; el adjunto y el pie siguen.
 5. Enviar con la red caída. **Esperado:** «No se pudo conectar…»; el adjunto
    y el pie se quedan. Reintentar con red: sale una sola vez al hilo y a Graph.
-6. En otra conversación, «Reenviar imagen» sobre una imagen del cliente.
+6. En otra conversación, el icono «Reenviar» (059) sobre una imagen del cliente.
    **Esperado:** el diálogo enseña la imagen, su pie, y destinos de WhatsApp
    sin el origen; el de ventana cerrada, deshabilitado; la búsqueda filtra.
 7. Elegir un destino. **Esperado:** el botón dice «Reenviar a {nombre}» y no

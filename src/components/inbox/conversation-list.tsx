@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { emptyInboxDescription, formatTime, previewText } from "./helpers";
 import { EVENTO_BORRADOR, leerBorrador } from "@/lib/borradores";
+import { atajoBandeja, esCampoDeTexto, sirveEscribiendo, vecina } from "@/lib/atajos";
+import { hayDialogoAbierto } from "@/components/atajos-globales";
 import { etiquetaVence, porVencer } from "@/lib/filtros-bandeja";
 
 /* Puntos de etapa: los tokens del tema, no hex copiados del tema claro —
@@ -119,6 +121,31 @@ export function ConversationList({
   const [stage, setStage] = useState<string>("all");
   const [inbox, setInbox] = useState<Channel | "all">("all");
   const inputRef = useRef<HTMLInputElement>(null);
+  // 055 · D3 — Alt+J / Alt+K recorren la lista en el orden que se ve (con los
+  // filtros puestos) y «/» lleva al buscador. Se lee lo visible por ref: el
+  // oyente se pone una vez.
+  const visibleRef = useRef<string[]>([]);
+  const selectedRef = useRef(selectedId);
+  selectedRef.current = selectedId;
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const atajo = atajoBandeja(e);
+      if (atajo !== "siguiente" && atajo !== "anterior" && atajo !== "buscar") return;
+      if (!sirveEscribiendo(atajo) && esCampoDeTexto(e.target)) return;
+      if (hayDialogoAbierto()) return;
+      e.preventDefault();
+      if (atajo === "buscar") {
+        inputRef.current?.focus();
+        return;
+      }
+      const id = vecina(visibleRef.current, selectedRef.current, atajo === "siguiente" ? 1 : -1);
+      if (id) onSelectRef.current(id);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   // 051 — La lista se repinta cuando un borrador aparece, cambia o se va.
   const [, setBorradores] = useState(0);
   useEffect(() => {
@@ -169,6 +196,7 @@ export function ConversationList({
   );
   const unreadCount = filtrado.filter((c) => c.unreadCount > 0).length;
   const visible = filter === "unread" ? filtrado.filter((c) => c.unreadCount > 0) : filtrado;
+  visibleRef.current = visible.map((c) => c.id);
   const pestanas: { id: typeof filter; label: string; count: number }[] = [
     { id: "all", label: "Todas", count: filtrado.length },
     { id: "unread", label: "No leídas", count: unreadCount },
@@ -410,6 +438,8 @@ export function ConversationList({
                   )}
                   <button
                     onClick={() => onSelect(c.id)}
+                    // 055 — Cuál está abierta, para Alt+J/K y los lectores de pantalla.
+                    aria-current={active ? "true" : undefined}
                     className={cn(
                       "flex w-full items-start gap-[11px] px-4 py-[var(--row-py)] text-left transition-colors",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",

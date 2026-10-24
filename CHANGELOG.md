@@ -5,18 +5,88 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
-## 2.3.0 — propuesta, sin publicar
+## Sin publicar — Contenedor Android opcional (053)
 
 - **Contenedor Android opcional** (053), complemento de la PWA: cámara/archivos,
   descargas autenticadas, recibir imágenes/PDF desde Compartir y pantalla sin red.
   Usa la marca y el login originales. El operador compila y firma su APK; no
   agrega Firebase, servicios, migraciones ni contratos al servidor.
 
-**Actualizar desde 2.2.0:** no hay migraciones ni variables nuevas. La web sigue
-funcionando sin el APK; para usarlo sigue [la guía Android](apps/android/README.md).
-Esta versión y las etiquetas de los manifiestos son una propuesta para revisión:
-no existe una imagen 2.3.0 publicada por esta contribución ni debe desplegarse
-esa etiqueta antes de que el mantenedor publique el release.
+No hay migraciones ni variables nuevas. La web sigue funcionando sin el APK; para
+usarlo sigue [la guía Android](apps/android/README.md). El número de versión lo
+decide el mantenedor al publicar el release.
+
+## 2.4.0 — 2026-10-23
+
+Avisos aunque no estés mirando, una bandeja que no se queda callada cuando se
+cae la conexión, la historia del cliente en su chat y atajos de teclado.
+Actualizar es redesplegar con la etiqueta `2.4.0`: no hay migraciones ni
+variables nuevas. Nea no cambia.
+
+### Nuevo
+
+- **Avisos del sistema** (056):
+  - «Activar avisos» en el menú;
+  - cuando escribe un cliente y no estás mirando Vocero, sale una
+    notificación con su nombre y el mensaje, y al tocarla se abre esa
+    conversación;
+  - la campana los silencia igual que el sonido.
+
+  Sin push: con Vocero cerrado no llega nada. En Windows, Chrome necesita
+  tener activadas sus notificaciones en Configuración → Sistema →
+  Notificaciones.
+- **«Sin conexión»** (056):
+  - una banda avisa «Sin internet» o «Sin conexión en tiempo real», con
+    «Reintentar ahora»;
+  - el tiempo real se reconecta solo (también tras un redespliegue) y la
+    bandeja trae lo que llegó mientras tanto.
+- **Eventos en el hilo** (054): en su lugar por hora, «Entró al embudo en
+  Nuevo», «Pasó a Interesado · por Ana», «Pasó a Perdido · Le pareció caro» y
+  «La IA se pausó: el cliente pidió un humano».
+- **Atajos de teclado** (055):
+  - **Ctrl+K** (⌘K) para ir a una pantalla o a una conversación;
+  - **?** para la ayuda;
+  - en la Bandeja, **Alt+J / Alt+K** para la conversación siguiente o
+    anterior, **/** para el buscador, **Alt+R** para responder y **Alt+N**
+    para una nota interna.
+- La Bandeja abre una conversación con `/inbox?conversation=<id>`.
+
+### Cambió
+
+- El panel del contacto nombra también el traspaso por hostilidad.
+
+## 2.3.0 — 2026-10-23
+
+Reenviar cualquier mensaje y, en el celular, responder deslizando. Actualizar
+es redesplegar con la etiqueta `2.3.0`: no hay migraciones ni variables
+nuevas. Nea no cambia.
+
+### Nuevo
+
+- **Reenviar cualquier mensaje** (059), no solo imágenes:
+  - el texto sale como texto;
+  - imagen, video, documento y audio salen como archivo nuevo, y una nota de
+    voz sigue siendo nota de voz.
+
+  El cliente lo recibe como un mensaje nuevo: la Cloud API no permite la
+  marca «Reenviado». Endpoint: `POST /api/conversations/:id/messages/forward`.
+- **En el celular** (059):
+  - deslizar un mensaje hacia cualquier lado lo cita;
+  - mantenerlo presionado abre un menú con Responder, Reenviar y Copiar
+    texto.
+
+### Cambió
+
+- **En la computadora**, los iconos «Responder» y «Reenviar» aparecen al pasar
+  el ratón por el mensaje. Ya no está el botón «Reenviar imagen» dentro de la
+  burbuja.
+- **En el celular**, se quitó la flecha junto a cada burbuja, que se leía como
+  «reenviar».
+
+### Arreglado
+
+- En la 2.3.0-rc.1, la hora de envío se salía de la burbuja en audios,
+  documentos y ubicaciones.
 
 ## 2.2.0 — 2026-10-23
 

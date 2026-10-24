@@ -64,7 +64,7 @@ Firebase/Web Push, avisos con app cerrada, agenda propia, permisos por áreas,
 sesiones nuevas, autoactualizador y publicación en una tienda. El push solo podría
 entrar después como conector opcional, apagado por defecto, conforme al Principio II.
 El contenedor tiene versión propia 0.1.0. Tras revisar el punto 5 de «Cómo
-contribuir» de AGENTS.md, se propone 2.3.0 en package/manifiestos/guía/changelog;
+contribuir» de AGENTS.md, no se toca la versión raíz (la base actual es 2.4.0) y el changelog queda en «Sin publicar»;
 esto supera la intención inicial de dejar la versión raíz intacta. No se crea
 tag ni release; el mantenedor puede reasignar la versión al aceptar la propuesta.
 

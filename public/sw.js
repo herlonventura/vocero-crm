@@ -5,10 +5,12 @@
  * dispositivo. Un CRM que enseña conversaciones viejas como si fueran actuales
  * es peor que uno que dice «sin conexión», y un celular se pierde.
  *
- * Hace tres cosas:
+ * Hace cuatro cosas:
  *   1. se activa enseguida, sin esperar a que se cierren las pestañas viejas;
  *   2. si una NAVEGACIÓN falla por falta de red, responde la página de abajo;
- *   3. todo lo demás (API, SSE, adjuntos, assets) ni lo toca: va a la red.
+ *   3. todo lo demás (API, SSE, adjuntos, assets) ni lo toca: va a la red;
+ *   4. (056) al tocar un aviso del sistema, trae Vocero al frente con esa
+ *      conversación abierta.
  *
  * White-label: la página no lleva el nombre de nadie.
  */
@@ -61,5 +63,27 @@ self.addEventListener("fetch", (event) => {
           headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
         })
     )
+  );
+});
+
+// 056 — Tocar un aviso: la ventana de Vocero que ya esté abierta pasa al
+// frente y abre la conversación; si no hay ninguna, se abre una. Solo rutas de
+// la Bandeja: un `data.url` manipulado no saca al operador a otro sitio.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const pedida = event.notification.data && event.notification.data.url;
+  const url =
+    typeof pedida === "string" && /^\/inbox(\?conversation=[\w%-]+)?$/.test(pedida) ? pedida : "/inbox";
+  event.waitUntil(
+    (async () => {
+      const ventanas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const propia = ventanas.find((c) => new URL(c.url).origin === self.location.origin);
+      if (propia) {
+        await propia.focus();
+        propia.postMessage({ tipo: "abrir", url });
+        return;
+      }
+      await self.clients.openWindow(url);
+    })()
   );
 });

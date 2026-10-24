@@ -132,3 +132,67 @@ export function useTituloNoLeidos(chats: number): void {
     };
   }, [chats]);
 }
+
+/**
+ * 056 — Abre una conversación desde un aviso. Además de navegar, avisa a la
+ * Bandeja ya montada: si la URL no cambia (otro aviso del mismo chat), el
+ * parámetro solo no bastaría.
+ */
+export const EVENTO_ABRIR_CONVERSACION = "vocero:abrir-conversacion";
+export function abrirConversacionDeAviso(
+  url: string,
+  navegar: (url: string) => void
+): void {
+  navegar(url);
+  const id = new URL(url, window.location.origin).searchParams.get("conversation");
+  if (id) window.dispatchEvent(new CustomEvent(EVENTO_ABRIR_CONVERSACION, { detail: id }));
+}
+
+/** 056 — El permiso de avisos de este navegador, o "unsupported" si no hay API. */
+export function permisoAvisos(): NotificationPermission | "unsupported" {
+  return typeof window !== "undefined" && "Notification" in window
+    ? Notification.permission
+    : "unsupported";
+}
+
+/**
+ * 056 · D3 — Muestra el aviso del sistema. Con service worker (048) va por
+ * `showNotification`, lo único que acepta Chrome en Android; sin él, por
+ * `new Notification`. El `tag` por conversación reemplaza el aviso anterior
+ * de ese chat. Nunca lanza: un aviso que no sale no rompe la Bandeja.
+ */
+export async function mostrarAvisoSistema(a: {
+  titulo: string;
+  cuerpo: string;
+  tag: string;
+  url: string;
+  icono?: string;
+  alAbrir: (url: string) => void;
+}): Promise<void> {
+  const opciones: NotificationOptions & { renotify?: boolean } = {
+    body: a.cuerpo,
+    tag: a.tag,
+    renotify: true,
+    icon: a.icono,
+    data: { url: a.url },
+  };
+  try {
+    const registro = await navigator.serviceWorker?.getRegistration();
+    if (registro) {
+      await registro.showNotification(a.titulo, opciones);
+      return;
+    }
+  } catch {
+    // Sin service worker usable: se intenta con la API de la página.
+  }
+  try {
+    const n = new Notification(a.titulo, opciones);
+    n.onclick = () => {
+      window.focus();
+      a.alAbrir(a.url);
+      n.close();
+    };
+  } catch {
+    // El navegador no deja avisar desde la página: no pasa nada.
+  }
+}

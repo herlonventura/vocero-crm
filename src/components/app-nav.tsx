@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AlertTriangle, Bell, BellOff, LogOut, X } from "lucide-react";
 import { BotonInstalar } from "@/components/pwa";
+import { BotonActivarAvisos } from "@/components/activar-avisos";
 import { limpiarBorradores } from "@/lib/borradores";
 import type { Branding } from "@/lib/branding";
 import type { ThemePreference } from "@/lib/theme";
@@ -15,12 +16,22 @@ import { useEvents } from "@/components/use-events";
 import {
   debeSonar,
   guardarSonido,
+  abrirConversacionDeAviso,
+  mostrarAvisoSistema,
+  permisoAvisos,
   reproducirAviso,
   sonidoActivado,
   useDesbloquearAudio,
   useTituloNoLeidos,
 } from "@/components/avisos-de-mensajes";
 import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  cuerpoAviso,
+  debeAvisarSistema,
+  urlDeAvisoSegura,
+  urlDeConversacion,
+} from "@/lib/avisos-sistema";
+import { appIconHref } from "@/lib/pwa";
 import { BrandLogo } from "@/components/brand-mark";
 import {
   BUILD_COMMIT,
@@ -89,12 +100,13 @@ export function AppNav({
 
   async function refetchUnread() {
     const res = await fetch("/api/conversations").catch(() => null);
-    if (!res?.ok) return;
+    if (!res?.ok) return null;
     const data = (await res.json()) as {
-      conversations: { unreadCount: number }[];
+      conversations: { id: string; unreadCount: number; contact: { name: string } }[];
     };
     setUnread(data.conversations.reduce((a, c) => a + c.unreadCount, 0));
     setChats(data.conversations.filter((c) => c.unreadCount > 0).length);
+    return data.conversations;
   }
 
   useEffect(() => {
@@ -105,11 +117,46 @@ export function AppNav({
   useDesbloquearAudio();
   useTituloNoLeidos(chats);
 
+  // 056 — Tocar un aviso del sistema (vía el service worker) abre su chat.
+  useEffect(() => {
+    const sw = navigator.serviceWorker;
+    if (!sw) return;
+    const alMensaje = (e: MessageEvent) => {
+      const datos = e.data as { tipo?: string; url?: unknown } | null;
+      const url = datos?.tipo === "abrir" ? urlDeAvisoSegura(datos.url) : null;
+      if (url) abrirConversacionDeAviso(url, (u) => router.push(u));
+    };
+    sw.addEventListener("message", alMensaje);
+    return () => sw.removeEventListener("message", alMensaje);
+  }, [router]);
+
   useEvents({
-    onMessageNew: ({ conversationId, message }) => {
-      const m = message as { direction?: string };
+    onMessageNew: async ({ conversationId, message }) => {
+      const m = message as Parameters<typeof cuerpoAviso>[0] & { direction?: string };
       if (debeSonar({ direction: m.direction, conversationId })) reproducirAviso();
-      void refetchUnread();
+      // 056 · D2 — Se decide ANTES de releer la lista: lo que cuenta es si el
+      // operador miraba cuando llegó.
+      const avisar = debeAvisarSistema({
+        direction: m.direction,
+        campana: sonidoActivado(),
+        permiso: permisoAvisos(),
+        visible: document.visibilityState === "visible",
+        foco: document.hasFocus(),
+      });
+      const lista = await refetchUnread();
+      // El nombre sale de la Bandeja: una conversación del Laboratorio no está
+      // en la lista y no avisa.
+      const conv = avisar ? lista?.find((c) => c.id === conversationId) : undefined;
+      if (conv) {
+        void mostrarAvisoSistema({
+          titulo: conv.contact.name,
+          cuerpo: cuerpoAviso(m),
+          tag: conversationId,
+          url: urlDeConversacion(conversationId),
+          icono: appIconHref(branding, 192),
+          alAbrir: (url) => abrirConversacionDeAviso(url, (u) => router.push(u)),
+        });
+      }
     },
     onConversationUpdated: () => void refetchUnread(),
   });
@@ -197,6 +244,7 @@ export function AppNav({
 
       {/* 048 — Solo cuando el navegador ofrece instalar la app: una fila
           propia y no un icono más en el pie, que ya va lleno. */}
+      <BotonActivarAvisos className={navItemClass(false)} />
       <BotonInstalar className={navItemClass(false)} />
 
       {/* Ajustes va abajo, solo: no es trabajo del día. */}

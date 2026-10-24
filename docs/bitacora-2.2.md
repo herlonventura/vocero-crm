@@ -631,3 +631,257 @@ gates, los arneses y el self-test quedaron en verde a las 13:26.
    intentaba crear su propia cuenta en una base que ya tenía dueña, y las
    capturas iniciaban sesión una vez por toma. Ahora los arneses aceptan la
    cuenta por variable y las capturas reusan una sola sesión.
+
+## 2026-10-23 — 059: reenviar cualquier mensaje y deslizar para responder
+
+**Qué pidió Kevin** (al probar la rc.1 en Android): reenviar cualquier mensaje,
+no solo imágenes, y en el celular deslizar para responder, porque la flecha de
+responder se leía como «reenviar».
+
+**Tiempos reales**: la spec quedó en commit a las 14:27. El arnés, los gates y
+el self-test quedaron en verde a las 15:00.
+
+**Qué cambió**:
+
+- **Reenviar cualquier mensaje.** El endpoint nuevo
+  `POST /api/conversations/:id/messages/forward` es el de la 042
+  generalizado:
+  - el texto sale como texto;
+  - imagen, video, documento y audio salen como archivo nuevo;
+  - la nota de voz sigue siendo nota de voz;
+  - el sticker sale como imagen.
+
+  La regla de qué se reenvía vive en `src/lib/reenvio.ts`, compartida por el
+  hilo y el servidor. Ubicación, contacto, reacciones y notas internas no se
+  reenvían. `forward-image` sigue igual.
+- **En la computadora**: al pasar el ratón por una burbuja aparecen dos
+  iconos, «Responder» y «Reenviar». El botón «Reenviar imagen» dentro de la
+  burbuja se fue.
+- **En el celular** (pantalla táctil):
+  - no hay iconos;
+  - deslizar la burbuja hacia cualquier lado la cita: la burbuja sigue al
+    dedo, se asoma el icono, y soltar a 56 px o más cita;
+  - mantener presionado medio segundo abre un menú abajo con «Responder»,
+    «Reenviar» y «Copiar texto».
+- **El diálogo** se llama por lo que reenvía. Avisa que le llega al cliente
+  sin la marca «Reenviado», porque la Cloud API no la permite.
+
+**Cómo se probó**:
+
+- Unitarias nuevas: 25.
+  - `reenvio.test.ts`: la regla y el gesto.
+  - `forward-message.test.ts`: el envío y la ruta.
+- `e2e-reenviar-y-deslizar.mjs`: 42/42, en claro y en oscuro. Desliza y
+  mantiene presionado con eventos táctiles reales (CDP `Input.dispatchTouchEvent`)
+  en un celular emulado sin «pasar el ratón».
+- Arneses del hilo, adaptados al icono: imágenes 42/42, responder citando
+  21/21, ligas 18/18, notas internas 28/28, notas de voz 41/41.
+- Typecheck, lint, test (1 343, con banderas apagadas y encendidas) y build:
+  verdes.
+- Self-test general en base limpia: **280/280**.
+
+**Capturas** (`docs/bitacora-2.2/`):
+
+- `059-antes-hilo-{escritorio,390}-{light,dark}.png`: la flecha junto a cada
+  burbuja en el celular.
+- `059-despues-hilo-…`: lo mismo después.
+- `059-deslizando-…`: la burbuja a medio deslizar.
+- `059-menu-…`: el menú de mantener presionado.
+- `059-dialogo-texto-…` y `059-dialogo-documento-…`.
+
+**Lo que salió mal**:
+
+1. **Al soltar tras mantener presionado, el menú se cerraba solo o
+   ejecutaba una opción.** El navegador manda un clic al punto del dedo, y
+   ese clic caía sobre el menú recién abierto. Ahora el `touchend` lo anula
+   (`preventDefault`) cuando abrió el menú o citó.
+2. **El ancho máximo de la burbuja dejó de limitar** al envolverla para los
+   gestos: un porcentaje dentro de una caja que se ajusta a su contenido no
+   limita nada. Ahora el `max-w` vive en la envoltura.
+3. **El tope de inicios de sesión** volvió a cortar una pasada del arnés. Se
+   reinició el servidor.
+
+## 2026-10-23 — 059, arreglo: la hora se salía de la burbuja
+
+**Qué reportó Kevin** al probar la 2.3.0-rc.1: bajo un audio, la hora de envío
+quedaba fuera de la burbuja.
+
+**Por qué**: la hora es un `float`. La burbuja era un elemento flex y eso la
+contenía; desde la 059 va dentro de la envoltura de los gestos, y un bloque
+normal no contiene sus floats. Pasaba con el audio, el documento y la
+ubicación.
+
+**Arreglo**: `flow-root` en la burbuja.
+
+**Cómo se probó**: `e2e-reenviar-y-deslizar.mjs` ganó un check que mide la
+hora contra el borde de cada burbuja. Sin el arreglo falló («3 fuera»); con
+él, 43/43. Notas de voz 41/41, imágenes 42/42, typecheck, lint, test (1 343)
+y build en verde.
+
+## 2026-10-23 — 056: avisos del sistema y «sin conexión»
+
+**Qué pidió Kevin**: tras publicar la 2.3.0, siguió con la 056, la candidata
+del estudio de la 2.2 que yo recomendé para el celular.
+
+**Tiempos reales**: la spec quedó en commit a las 17:04. El arnés, los gates
+y el self-test quedaron en verde a las 17:22.
+
+**Qué cambió**:
+
+- **«Activar avisos»** en el menú, encima de «Instalar app». Aparece solo
+  mientras el navegador no ha decidido el permiso.
+- **Aviso del sistema** cuando escribe un cliente y no estás mirando Vocero:
+  - lleva el nombre del contacto y el texto recortado a 120 caracteres, o
+    «Audio», «Imagen»…;
+  - un `tag` por conversación hace que una ráfaga no apile diez avisos;
+  - tocarlo trae Vocero al frente con esa conversación;
+  - sale por el service worker de la 048, que es lo que acepta Android;
+  - la campana de la 045 lo silencia igual que el sonido;
+  - el Laboratorio no avisa.
+
+  Sin push: con Vocero cerrado no llega nada (D4).
+- **La banda «sin conexión»**, en cualquier pantalla:
+  - «Sin internet» en cuanto el navegador pierde la red;
+  - «Sin conexión en tiempo real. Reintentando…» si el canal lleva más de
+    4 s caído;
+  - trae «Reintentar ahora».
+- **`useEvents` reconecta de verdad.** Si el servidor responde con error,
+  vuelve a abrir con espera creciente (1 s … 30 s). Al volver la red o la
+  página al frente, reabre en el momento. Cada reconexión pone la bandeja al
+  día.
+- **La Bandeja acepta `/inbox?conversation=<id>`.** Lo aplica una vez por
+  aviso, para no volver a saltar con cada refresco.
+
+**Cómo se probó**:
+
+- Unitarias nuevas: 8 (cuándo avisa, qué dice, rutas seguras, espera).
+- `e2e-avisos-y-conexion.mjs`: 24/24, en claro y en oscuro.
+  - Los avisos se simulan en la página.
+  - La red se corta de verdad con `setOffline`.
+  - El servidor se tumba con un 503 en `/api/events`.
+- Arneses vecinos: avisos (045) 24/24 y PWA (048) 36/36.
+- Typecheck, lint, test (1 351, con banderas apagadas y encendidas) y build:
+  verdes.
+- Self-test general en base limpia: **280/280**.
+
+**Capturas** (`docs/bitacora-2.2/`):
+
+- `056-antes-…` y `056-despues-…`, en claro y oscuro: `menu` (la fila
+  «Activar avisos») y `sin-red` (antes no se decía nada).
+- `056-sin-internet-…` y `056-sin-tiempo-real-390-…`.
+
+**Lo que salió mal**:
+
+1. **Lo que llegaba sin red no aparecía al volver.** La conexión SSE ya
+   abierta sobrevive al corte, así que los eventos llegaban, pero la relectura
+   de la lista fallaba sin red. Al volver, como la conexión seguía abierta,
+   nadie se ponía al día. Ahora volver la red siempre pone al día.
+2. **Por ese mismo motivo, el arnés ya no podía tumbar el SSE con un corte de
+   red.** Ahora cierra las conexiones con el `error` que daría el navegador
+   cuando el servidor corta el flujo.
+3. **El parámetro `?conversation=` volvía a saltar** a esa conversación con
+   cada refresco de la lista. Se aplica una vez por aviso, con un check que lo
+   cuida.
+
+## 2026-10-23 — 054: eventos en el hilo
+
+**Qué pidió Kevin**: cerrar la 2.4.0 con la 054 y la 055, hasta terminarlas
+sin esperarlo, y después publicar.
+
+**Tiempos reales**: la spec quedó en commit a las 18:16. El arnés y las
+capturas quedaron en verde a las 18:22, y los gates a las 18:26.
+
+**Qué cambió**:
+
+- **El hilo pinta, en su lugar por hora, una línea discreta** (no una
+  burbuja):
+  - «Entró al embudo en Nuevo»;
+  - «Pasó a Interesado · por Ana»;
+  - «Pasó a Perdido · Le pareció caro»;
+  - «La IA se pausó: el cliente pidió un humano».
+- **Sale de lo que ya se guarda**: la historia de `lead_stage_event` (sin las
+  fechas sembradas) y el traspaso vigente. Sin tabla ni migración.
+- **Lo que no se guarda no se inventa**: pausar y reanudar la IA a mano no
+  deja historia (D2).
+- **Endpoint nuevo**: `GET /api/conversations/:id/eventos`, con `scoped()`.
+  De quien movió el lead solo da el nombre.
+- **En vivo**: con `conversation.updated` y al reconectar.
+- **Las etiquetas del traspaso** pasaron a `src/lib/eventos-hilo.ts`. El panel
+  del contacto las usa de ahí y ganó la que le faltaba, «hostilidad».
+
+**Cómo se probó**:
+
+- Unitarias nuevas: 6.
+- `e2e-eventos-hilo.mjs`: 15/15, en claro y en oscuro. Mueve el lead por la
+  API del pipeline, hace el traspaso por `/api/bot/handoff` y reactiva.
+- Arneses vecinos: notas internas 28/28, reenviar y deslizar 43/43.
+- Typecheck, lint, test (1 357, con banderas apagadas y encendidas) y build:
+  verdes.
+- Self-test general en base limpia: **280/280**.
+
+**Capturas** (`docs/bitacora-2.2/`):
+
+- `054-antes-hilo-…` y `054-despues-hilo-…`, en claro y oscuro.
+- `054-eventos-…` y `054-eventos-390-…`.
+
+**Lo que salió mal**:
+
+1. **El env de pruebas de esta base no tenía `BOT_API_KEY`**, y el traspaso
+   salió en rojo («hay BOT_API_KEY»). Se agregó al env del scratchpad.
+2. **Un evento de dos líneas en una píldora redonda se veía raro.** Ahora
+   lleva esquinas más suaves.
+
+## 2026-10-23 — 055: atajos de teclado y Ctrl+K
+
+**Tiempos reales**: la spec quedó en commit a las 18:34. El arnés pasó 25/25
+a la primera; los gates y el self-test quedaron en verde después de aclarar
+el fallo de la 049 (abajo).
+
+**Qué cambió**:
+
+- **Ctrl+K (⌘K), desde cualquier pantalla**: una barra que encuentra
+  pantallas del menú (según rol y banderas, más Ajustes) y conversaciones por
+  nombre o teléfono, sin acentos.
+  - ↑ ↓ y Enter para ir; Escape para cerrar.
+  - Una conversación se abre por la misma vía que el aviso de la 056.
+- **«?», fuera de un campo**: la ayuda con los 7 atajos.
+- **En la Bandeja**:
+  - Alt+J y Alt+K recorren la lista en el orden visible, con los filtros
+    puestos, y en los extremos no dan la vuelta;
+  - «/» va al buscador;
+  - Alt+R pasa a «Responder» y Alt+N a «Nota interna», con el foco en la
+    caja.
+
+  Los de Alt sirven también escribiendo y usan la tecla física (`code`):
+  Option+J en Mac escribe «∆».
+- **Alt+N en lugar de Alt+P**, que proponía el estudio: Alt+P abre un menú en
+  Firefox en algunos idiomas.
+- **La fila abierta de la lista lleva `aria-current`**: sirve a los lectores
+  de pantalla y al arnés.
+
+**Cómo se probó**:
+
+- Unitarias nuevas: 9.
+- `e2e-atajos.mjs`: 25/25, en claro y en oscuro, con el teclado real.
+- Arneses vecinos: borradores 19/19, filtros 22/22, búsqueda en verde y
+  respuestas rápidas 35/35.
+- Typecheck, lint, test (1 366, con banderas apagadas y encendidas) y build:
+  verdes.
+- Self-test general en base limpia: **280/280**, a las 18:52.
+
+**Capturas** (`docs/bitacora-2.2/`):
+
+- `055-barra-…`, `055-ayuda-…` y `055-barra-390-…`, en claro y oscuro.
+- No hay «antes»: sin la 055, Ctrl+K y «?» no hacen nada en pantalla.
+
+**Lo que salió mal**:
+
+1. **El arnés de la 049 fallaba en AC6** («sin respuestas»), también con el
+   código de `main`. No era la 055, ni un fallo del producto: aislado, el
+   menú abría bien.
+   - Desde la 051, la conversación guardaba el borrador de un paso anterior
+     del mismo arnés, y la «/» caía pegada al final del texto, donde no abre
+     el menú.
+   - El arnés ahora vacía la caja antes de teclear.
+2. **El tope de inicios de sesión** volvió a cortar una pasada. Se reinició el
+   servidor.

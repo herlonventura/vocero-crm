@@ -7,7 +7,7 @@ un adjunto automáticamente. Incluye guía para compilar y firmar con clave prop
 
 Spec 053, carril ligero. Sin migraciones, contratos nuevos, cambios en el login,
 Firebase ni servicios adicionales. La PWA sigue siendo la opción sin APK.
-Versión 2.3.0 propuesta según AGENTS.md, pendiente de asignación del mantenedor.
+Sin número de versión propio: la base actual es 2.4.0 y el mantenedor asigna la versión al publicar el release.
 
 ## Cómo se probó
 
