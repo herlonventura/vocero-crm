@@ -11,8 +11,8 @@ con su modelo original; no hay tablas, contratos ni servicios nuevos.
 
 Independiente del PR Android #158, desde `main` (2.4.0). Carril ligero y
 límites en [spec.md](spec.md); compilación, firma opcional y SmartScreen en
-[apps/windows/README.md](../../apps/windows/README.md). La versión raíz 2.5.0
-es propuesta según AGENTS.md y puede reasignarse antes de integrar.
+[apps/windows/README.md](../../apps/windows/README.md). El número de versión
+queda para el mantenedor.
 
 Typecheck, lint y build aprobados en ambas matrices; 1.357 tests del original
 por matriz, 24 pruebas nativas y 27 comprobaciones Electron/HTTP aprobadas.

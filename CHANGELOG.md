@@ -5,7 +5,7 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
-## 2.5.0 — propuesta local, pendiente de revisión
+## Sin versión — propuesta 060, pendiente de revisión
 
 Contenedor Windows opcional (060): instancia elegida por el operador, marca PWA,
 sesión original cifrada con Windows, bandeja, avisos SSE existentes, archivos y
