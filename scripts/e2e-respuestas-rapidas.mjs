@@ -213,6 +213,9 @@ try {
   await page.goto(`${BASE}/inbox`);
   await page.getByText(NOMBRE).first().click();
   await caja.waitFor();
+  // 051 guarda el borrador de esta conversación: lo que quedó de un paso
+  // anterior haría que la «/» caiga pegada al final, donde no abre el menú.
+  await caja.fill("");
   await caja.click();
   await caja.pressSequentially("/");
   await menu.waitFor();

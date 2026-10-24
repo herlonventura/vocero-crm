@@ -9,6 +9,7 @@ import type { ResolvedCommit } from "@/lib/version";
 import { AppNav } from "@/components/app-nav";
 import { BrandLogo } from "@/components/brand-mark";
 import { BandaSinConexion } from "@/components/banda-sin-conexion";
+import { AtajosGlobales } from "@/components/atajos-globales";
 
 /**
  * Cascarón de la app en dos modos:
@@ -113,6 +114,8 @@ export function AppShell({
         {aviso}
         {/* 056 — El tiempo real caído se ve desde cualquier pantalla. */}
         <BandaSinConexion />
+        {/* 055 — Ctrl+K y «?» desde cualquier pantalla. */}
+        <AtajosGlobales agenda={agenda} role={role} />
 
         <main className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</main>
       </div>

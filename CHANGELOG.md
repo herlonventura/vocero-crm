@@ -5,16 +5,55 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
-## 2.4.0 — propuesta local, pendiente de revisión
+## 2.5.0 — propuesta local, pendiente de revisión
 
 Contenedor Windows opcional (060): instancia elegida por el operador, marca PWA,
 sesión original cifrada con Windows, bandeja, avisos SSE existentes, archivos y
 actualizaciones optativas. Sin servicios, tablas ni contratos nuevos.
 
-**Actualizar desde 2.3.0:** el servidor no necesita migraciones ni variables
+**Actualizar desde 2.4.0:** el servidor no necesita migraciones ni variables
 adicionales para este contenedor. La PWA sigue siendo la opción recomendada.
 Versión propuesta para revisión; no hay tag, imagen ni instalador publicado.
 Compilación y límites: [apps/windows/README.md](apps/windows/README.md).
+
+## 2.4.0 — 2026-10-23
+
+Avisos aunque no estés mirando, una bandeja que no se queda callada cuando se
+cae la conexión, la historia del cliente en su chat y atajos de teclado.
+Actualizar es redesplegar con la etiqueta `2.4.0`: no hay migraciones ni
+variables nuevas. Nea no cambia.
+
+### Nuevo
+
+- **Avisos del sistema** (056):
+  - «Activar avisos» en el menú;
+  - cuando escribe un cliente y no estás mirando Vocero, sale una
+    notificación con su nombre y el mensaje, y al tocarla se abre esa
+    conversación;
+  - la campana los silencia igual que el sonido.
+
+  Sin push: con Vocero cerrado no llega nada. En Windows, Chrome necesita
+  tener activadas sus notificaciones en Configuración → Sistema →
+  Notificaciones.
+- **«Sin conexión»** (056):
+  - una banda avisa «Sin internet» o «Sin conexión en tiempo real», con
+    «Reintentar ahora»;
+  - el tiempo real se reconecta solo (también tras un redespliegue) y la
+    bandeja trae lo que llegó mientras tanto.
+- **Eventos en el hilo** (054): en su lugar por hora, «Entró al embudo en
+  Nuevo», «Pasó a Interesado · por Ana», «Pasó a Perdido · Le pareció caro» y
+  «La IA se pausó: el cliente pidió un humano».
+- **Atajos de teclado** (055):
+  - **Ctrl+K** (⌘K) para ir a una pantalla o a una conversación;
+  - **?** para la ayuda;
+  - en la Bandeja, **Alt+J / Alt+K** para la conversación siguiente o
+    anterior, **/** para el buscador, **Alt+R** para responder y **Alt+N**
+    para una nota interna.
+- La Bandeja abre una conversación con `/inbox?conversation=<id>`.
+
+### Cambió
+
+- El panel del contacto nombra también el traspaso por hostilidad.
 
 ## 2.3.0 — 2026-10-23
 

@@ -6,6 +6,7 @@ import { ChevronLeft, PanelRight } from "lucide-react";
 import { cn, formatPhone } from "@/lib/utils";
 import { ContactAvatar } from "@/components/avatar";
 import type { NotaDto } from "@/lib/notas";
+import type { EventoHiloDto } from "@/lib/eventos-hilo";
 import type {
   ConversationDto,
   MessageDto,
@@ -63,6 +64,8 @@ export function InboxClient({
   const [messages, setMessages] = useState<MessageDto[]>([]);
   // 050 — Las notas internas de la conversación abierta.
   const [notas, setNotas] = useState<NotaDto[]>([]);
+  // 054 — Cambios de etapa y traspaso, para pintarlos en el hilo.
+  const [eventos, setEventos] = useState<EventoHiloDto[]>([]);
   const [pending, setPending] = useState<PendingOut[]>([]);
   // 039: el mensaje al que se está respondiendo citando.
   const [replyTo, setReplyTo] = useState<MessageDto | null>(null);
@@ -124,6 +127,13 @@ export function InboxClient({
     if (selectedIdRef.current === conversationId) setNotas(data.notas);
   }, []);
 
+  const refetchEventos = useCallback(async (conversationId: string) => {
+    const res = await fetch(`/api/conversations/${conversationId}/eventos`).catch(() => null);
+    if (!res?.ok) return;
+    const data = (await res.json()) as { eventos: EventoHiloDto[] };
+    if (selectedIdRef.current === conversationId) setEventos(data.eventos);
+  }, []);
+
   useEffect(() => {
     void refetchConversations();
   }, [refetchConversations]);
@@ -133,16 +143,18 @@ export function InboxClient({
       setSelectedId(id);
       setMessages([]);
       setNotas([]);
+      setEventos([]);
       setReplyTo(null);
       void refetchMessages(id);
       void refetchNotas(id);
+      void refetchEventos(id);
       void fetch(`/api/conversations/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ markRead: true }),
       });
     },
-    [refetchMessages, refetchNotas]
+    [refetchMessages, refetchNotas, refetchEventos]
   );
 
   /** 026 — Saca una conversación eliminada de todo lo que esta pestaña recuerda. */
@@ -153,6 +165,7 @@ export function InboxClient({
       setSelectedId(null);
       setMessages([]);
       setNotas([]);
+      setEventos([]);
       setReplyTo(null);
     }
   }, []);
@@ -231,6 +244,8 @@ export function InboxClient({
     },
     onConversationUpdated: () => {
       void refetchConversations();
+      // 054 — Cambió la etapa o la IA: el hilo pinta el evento en vivo.
+      if (selectedIdRef.current) void refetchEventos(selectedIdRef.current);
       // El agente movió de etapa o cambió el handoff: refresca el panel en vivo.
       setDetailRev((v) => v + 1);
     },
@@ -244,7 +259,10 @@ export function InboxClient({
     onReconnect: () => {
       // Catch-up tras reconexión (contrato sse.md): refetch completo.
       void refetchConversations();
-      if (selectedIdRef.current) void refetchMessages(selectedIdRef.current);
+      if (selectedIdRef.current) {
+        void refetchMessages(selectedIdRef.current);
+        void refetchEventos(selectedIdRef.current);
+      }
       setDetailRev((v) => v + 1);
     },
   });
@@ -507,6 +525,7 @@ export function InboxClient({
               <MessageThread
                 messages={thread}
                 notas={notas}
+                eventos={eventos}
                 onBorrarNota={async (n) => {
                   if (!window.confirm("¿Borrar esta nota interna?")) return;
                   const res = await fetch(`/api/conversations/${n.conversationId}/notes/${n.id}`, {

@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { atajoBandeja } from "@/lib/atajos";
+import { hayDialogoAbierto } from "@/components/atajos-globales";
 import {
   useEffect,
   useLayoutEffect,
@@ -96,6 +98,25 @@ export function Composer({
   const [cerradoEn, setCerradoEn] = useState<number | null>(null);
   // 050 — Responder al cliente o anotar para el equipo.
   const [modo, setModo] = useState<"responder" | "nota">("responder");
+  const notaRef = useRef<HTMLTextAreaElement>(null);
+  // 055 · D3 — Alt+R escribe una respuesta y Alt+N una nota interna, también
+  // con el foco en la caja. Con un diálogo abierto no actúan.
+  const hayNotas = Boolean(onNota);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const atajo = atajoBandeja(e);
+      if (atajo !== "responder" && atajo !== "nota") return;
+      if (hayDialogoAbierto()) return;
+      if (atajo === "nota" && !hayNotas) return;
+      e.preventDefault();
+      setModo(atajo === "nota" ? "nota" : "responder");
+      setError(null);
+      // Tras pintar la otra pestaña: el foco va a su caja.
+      requestAnimationFrame(() => (atajo === "nota" ? notaRef : taRef).current?.focus());
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hayNotas]);
   const [nota, setNota] = useState(() => leerBorrador("nota", conversation.id));
   const [guardandoNota, setGuardandoNota] = useState(false);
   // Hay caja de texto libre (ventana normal, o la humana de Instagram/Messenger).
@@ -480,6 +501,7 @@ export function Composer({
         >
           <Lock className="mb-2 h-4 w-4 shrink-0 text-warning-text" strokeWidth={1.8} aria-hidden />
           <textarea
+            ref={notaRef}
             value={nota}
             rows={2}
             autoFocus

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   Check,
+  ArrowRightLeft,
   CheckCheck,
   Clock3,
   Copy,
@@ -17,8 +18,10 @@ import {
   Sparkles,
   Trash2,
   UserRound,
+  UserRoundCheck,
 } from "lucide-react";
 import { intercalarNotas, type NotaDto } from "@/lib/notas";
+import type { EventoHiloDto } from "@/lib/eventos-hilo";
 import {
   claseReenvio,
   desplazamientoBurbuja,
@@ -335,6 +338,28 @@ function GestosBurbuja({
 }
 
 
+/**
+ * 054 — Un evento en el hilo (cambio de etapa, traspaso a una persona): una
+ * línea discreta y centrada, no una burbuja. No se responde ni se reenvía.
+ */
+function EventoHilo({ evento }: { evento: EventoHiloDto }) {
+  const Icono = evento.tipo === "etapa" ? ArrowRightLeft : UserRoundCheck;
+  return (
+    <div data-evento-id={evento.id} className="my-2 flex justify-center px-2">
+      <span className="inline-flex max-w-full items-center gap-1.5 rounded-2xl border border-border bg-background/80 px-3 py-1 text-center text-[11.5px] text-text-2 shadow-sm">
+        <Icono className="h-3.5 w-3.5 shrink-0 text-text-3" strokeWidth={1.8} aria-hidden />
+        <span className="min-w-0 break-words">{evento.texto}</span>
+        <span className="shrink-0 font-mono text-[10px] text-text-3">{bubbleTime(evento.createdAt)}</span>
+      </span>
+    </div>
+  );
+}
+
+/** 050 · 054 — Lo que se intercala por hora entre los mensajes. */
+type Intercalado =
+  | ({ clase: "nota" } & NotaDto)
+  | ({ clase: "evento" } & EventoHiloDto);
+
 function bubbleTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("es-MX", {
     hour: "2-digit",
@@ -351,6 +376,7 @@ export function MessageThread({
   onForwarded,
   notas = [],
   onBorrarNota,
+  eventos = [],
 }: {
   messages: MessageDto[];
   /** 039: quién firma las citas del cliente. */
@@ -363,6 +389,8 @@ export function MessageThread({
   /** 050 — Notas internas de la conversación, intercaladas por hora. */
   notas?: NotaDto[];
   onBorrarNota?: (n: NotaDto) => void;
+  /** 054 — Cambios de etapa y traspaso, intercalados por hora. */
+  eventos?: EventoHiloDto[];
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   // 045 — El hilo se queda abajo mientras crece (una foto o un audio que
@@ -400,7 +428,7 @@ export function MessageThread({
     if (!el) return;
     el.scrollTop = el.scrollHeight;
     pegadoAbajo.current = true;
-  }, [messages.length, notas.length, notice]);
+  }, [messages.length, notas.length, eventos.length, notice]);
 
   // Sin esto, una conversación corta con una foto quedaba en el primer
   // mensaje: al bajar al final todavía cabía todo (scroll 0) y, cuando la foto
@@ -455,8 +483,18 @@ export function MessageThread({
         />
       )}
       {(() => {
-        // 050 — Qué notas van antes de cada mensaje (y cuáles al final).
-        const reparto = intercalarNotas(messages, notas);
+        // 050 · 054 — Qué notas y eventos van antes de cada mensaje (y
+        // cuáles al final), con la misma regla de hora.
+        const reparto = intercalarNotas<Intercalado>(messages, [
+          ...notas.map((n) => ({ clase: "nota" as const, ...n })),
+          ...eventos.map((e) => ({ clase: "evento" as const, ...e })),
+        ]);
+        const pintar = (x: Intercalado) =>
+          x.clase === "nota" ? (
+            <NotaInterna key={`n-${x.id}`} nota={x} onBorrar={onBorrarNota} />
+          ) : (
+            <EventoHilo key={`e-${x.id}`} evento={x} />
+          );
         return (
           <>
       {messages.map((m, i) => {
@@ -476,9 +514,7 @@ export function MessageThread({
 
         return (
           <div key={m.id}>
-            {reparto.antes[i]!.map((n) => (
-              <NotaInterna key={n.id} nota={n} onBorrar={onBorrarNota} />
-            ))}
+            {reparto.antes[i]!.map(pintar)}
             {newDay && (
               <div className="my-3 flex justify-center">
                 <span className="kicker rounded-full border border-border-strong bg-background px-3 py-1 text-text-2 shadow-sm">
@@ -620,9 +656,7 @@ export function MessageThread({
           </div>
         );
       })}
-      {reparto.alFinal.map((n) => (
-        <NotaInterna key={n.id} nota={n} onBorrar={onBorrarNota} />
-      ))}
+      {reparto.alFinal.map(pintar)}
           </>
         );
       })()}

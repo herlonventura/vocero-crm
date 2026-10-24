@@ -70,7 +70,7 @@ son dependencias solo del cliente optativo, con lock propio.
 
 No agenda interna nueva, push con el proceso cerrado, sincronización de aplazamientos,
 almacenamiento offline de clientes, cuenta real ni publicación. El contenedor tiene
-versión 0.1.0; se propone 2.4.0 en los manifiestos raíz según AGENTS.md, reasignable
+versión 0.1.0; se propone 2.5.0 en los manifiestos raíz según AGENTS.md, reasignable
 por el mantenedor. El número 060 sigue al mayor observado (059); 053 queda intacto.
 Mantener Electron, firmar instaladores y aceptar una alternativa a la PWA requieren
 decisión del autor; funcionar en una instalación propia no equivale a aprobación upstream.

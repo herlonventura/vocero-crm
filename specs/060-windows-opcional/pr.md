@@ -9,9 +9,9 @@ Guardar como, enlaces externos confirmados, recuperación de conexión y un feed
 de actualización opcional del operador. Citas avisa solo con Agenda activa y
 con su modelo original; no hay tablas, contratos ni servicios nuevos.
 
-Independiente del PR Android #158, desde `main` (`41d0b39`). Carril ligero y
+Independiente del PR Android #158, desde `main` (2.4.0). Carril ligero y
 límites en [spec.md](spec.md); compilación, firma opcional y SmartScreen en
-[apps/windows/README.md](../../apps/windows/README.md). La versión raíz 2.4.0
+[apps/windows/README.md](../../apps/windows/README.md). La versión raíz 2.5.0
 es propuesta según AGENTS.md y puede reasignarse antes de integrar.
 
 Typecheck, lint y build aprobados en ambas matrices; 1.357 tests del original
