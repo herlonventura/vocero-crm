@@ -16,6 +16,25 @@ No hay migraciones ni variables nuevas. La web sigue funcionando sin el APK; par
 usarlo sigue [la guía Android](apps/android/README.md). El número de versión lo
 decide el mantenedor al publicar el release.
 
+## 2.6.1 — 2026-10-29
+
+Mantenimiento. Actualizar es redesplegar con la etiqueta `2.6.1`: no hay
+migraciones ni variables nuevas. Nea no cambia.
+
+### Seguridad
+
+- **zod 4 en la app** (#184). El zod 3 caía en GHSA-mrhx-c7xc-m3w5 (agotar
+  la memoria al validar colecciones grandes) y la rama 3.x no tiene parche. Era
+  el pendiente de la 2.5.3. Los mensajes de error por defecto de una petición
+  inválida (el `message` del 422) cambian de redacción.
+
+### Arreglado
+
+- **El build ya no depende de Google Fonts** (#183). Las seis familias viven
+  en el repo (`src/app/fonts`, licencia OFL) con `next/font/local`; antes un
+  hipo de la red de Google tumbaba el build. Quien construye desde el código
+  ya no necesita salida a internet para las fuentes.
+
 ## 2.6.0 — 2026-10-29
 
 Plantillas que funcionan con el split de Meta de 2026, y las que creaste fuera
